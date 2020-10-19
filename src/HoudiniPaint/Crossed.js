@@ -1,29 +1,19 @@
-registerPaint('crossed', class {
+class Crossed{
 
-    static get inputProperties() { return ['--crossColor']; }
-
-    static get inputArguments() { return ['*','<length>']; }
+    static get inputProperties() { return ['--crossColor','--crossThickness']; }
+    //
+    // 2020-10-19 not supported so far
+    // static get inputArguments() { return ['*','<length>']; }
 
     paint(ctx,size,properties){
 
-        const theColor = props.get( '--crossColor' );
-        const strokeType = properties?.[0].toString() ?? 'stroke';
-        const strokeWidth = parseInt(args?.[1] ?? 1.0);
+        const theColor = ""+(properties.get( '--crossColor' ) ?? "white");
+        const strokeWidth = parseInt(properties.get( '--crossThickness' ) ?? 1);
 
-        console.log(theColor,strokeType,strokeWidth);
+        console.debug(properties,size,theColor,strokeWidth);
 
         ctx.lineWidth = strokeWidth;
-
-        if ( strokeType === 'stroke' ) {
-            ctx.fillStyle = 'transparent';
-            ctx.strokeStyle = theColor;
-        } else if ( strokeType === 'filled' ) {
-            ctx.fillStyle = theColor;
-            ctx.strokeStyle = theColor;
-        } else {
-            ctx.fillStyle = 'none';
-            ctx.strokeStyle = 'none';
-        }
+        ctx.strokeStyle = theColor;
 
         ctx.beginPath();
         ctx.moveTo( 0, 0 );
@@ -36,4 +26,6 @@ registerPaint('crossed', class {
 
     }
 
-});
+}
+
+registerPaint('crossed', Crossed );
