@@ -1,1 +1,4 @@
-console.log("Hello World 2");
+
+window.MyApp={
+    test:()=>console.log("Hello World!")
+};

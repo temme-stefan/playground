@@ -104,4 +104,4 @@ typings/
 /.idea/
 /package-lock.json
 /yarn.lock
-/dist/js/
+
