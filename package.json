@@ -10,6 +10,7 @@
   },
   "scripts": {
     "build": "rollup --config",
-    "dev": "rollup --config --watch"
+    "dev": "rollup --config --watch",
+    "deploy": "ssh ftp313903-2751562@webhosting39.1blu.de \"rm -rf ~/www/playground/*\" && scp -r dist/* ftp313903-2751562@webhosting39.1blu.de:~/www/playground"
   }
 }
