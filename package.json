@@ -3,10 +3,12 @@
   "description": "my playground",
   "author": "Stefan Temme",
   "dependencies": {
+    "@rollup/plugin-node-resolve": "^11.2.1",
     "rollup": "^2.32.0",
     "rollup-plugin-livereload": "^2.0.0",
     "rollup-plugin-serve": "^1.0.4",
-    "rollup-watch": "^4.3.1"
+    "rollup-watch": "^4.3.1",
+    "three": "^0.127.0"
   },
   "scripts": {
     "build": "rollup --config",
