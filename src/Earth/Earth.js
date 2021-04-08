@@ -52,44 +52,59 @@ const getNextCityData = (callback) => {
         });
 }
 
-const createCity = (data)=>{
+let loadedModel;
+const  addInnerCity = ( city)=> {
+    city.add(new Mesh(new SphereBufferGeometry(0.0005),new MeshStandardMaterial({color:0xff0000})));
+    return;
+    if (loadedModel){
+        city.add(loadedModel.clone());
+    }
     const loader = new GLTFLoader();
-    const city = new Group();
-    scene.add(city);
-    city.position.y=1;
-    // const yAngle= city.position.angleTo(new Vector3(0,1,0));
-    city.lookAt(new Vector3(0,0,0));
-
-    // const yQuat= new Quaternion();
-    // yQuat.setFromAxisAngle(new Vector3(0,0,1),-yAngle);
-    // const zAngle = city.position.angleTo(new Vector3(0,0,1));
-    // const zQuat= new Quaternion();
-    // zQuat.setFromAxisAngle(new Vector3(1,0,0),-zAngle);
-    // city.quaternion.multiply(zQuat).multiply(yQuat);
-    city.add(new Mesh(new SphereBufferGeometry(0.01),new MeshStandardMaterial({color:0xff0000})));
-    loader.load('models/city/scene.gltf',(model)=>{
-        const innercity=model.scene;
-        const posWrapper=new Group();
+    loader.load('models/city/scene.gltf', (model) => {
+        const innercity = model.scene;
+        const posWrapper = new Group();
         posWrapper.add(innercity);
-        city.add(posWrapper);
-        innercity.quaternion.multiply(new Quaternion().setFromAxisAngle(new Vector3(1,0,0),-Math.PI/2));
+        loadedModel=posWrapper;
+        city.add(loadedModel);
+        innercity.quaternion.multiply(new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), -Math.PI / 2));
         innercity.updateMatrix(true);
         posWrapper.updateMatrix(true);
-        const box = new Box3().setFromObject(posWrapper);
-        const scale= new Vector3();
+        const setColor = (o => o.material?.color.setHex(0xff0000));
+        innercity.traverse(setColor);
+        const box = new Box3().setFromObject(innercity);
+        const scale = new Vector3();
         box.getSize(scale);
-        posWrapper.scale.multiplyScalar(0.1/Math.max(Math.max(scale.x,scale.y),scale.z));
+        posWrapper.scale.multiplyScalar(0.001 / Math.max(Math.max(scale.x, scale.y), scale.z));
         posWrapper.updateMatrixWorld(true);
         const smallbox = box.applyMatrix4(posWrapper.matrix);
-        const size= new Vector3();
+        const size = new Vector3();
         const center = new Vector3();
         box.getSize(size);
-        box.getCenter(center)
-        center.y=0;
-        posWrapper.position.sub(center).add(new Vector3(0,0,0));
+        posWrapper.position.add(new Vector3(-size.z / 2, size.x / 2, 0));
 
-        console.log(posWrapper);
     })
+}
+
+const createCity = (data)=>{
+    const city = new Group();
+    scene.add(city);
+    const radius=1;
+
+    const polar= (90 -data.latitude )/180*Math.PI;
+    const azimuthal = (-data.longitude+90)/180*Math.PI;
+
+    const xR = radius * Math.sin(polar) * Math.cos(azimuthal)
+    const yR = radius * Math.sin(polar) * Math.sin(azimuthal)
+    const zR = radius * Math.cos(polar)
+
+    const xL = yR
+    const yL = zR
+    const zL = -xR
+    city.position.set(xL,yL,zL);
+    city.lookAt(new Vector3(0,0,0));
+    city.scale.multiplyScalar(data.population/1e6);
+
+    addInnerCity( city);
 }
 
 const getCityQuery = () => {
@@ -103,11 +118,18 @@ const init = () => {
     scene = STAGE.scene;
     window.STAGE = STAGE;
     createEarth();
-    getNextCityData((cities) => {
-        console.log(cities);
-        createCity(cities[0]);
-        // setTimeout(() => getNextCityData(json2 => console.log(json2)), 1000);
-    });
+    let steps=4;
+    const step = ()=>{
+        getNextCityData((cities) => {
+            console.log(cities);
+            cities.forEach(c=>createCity(c));
+            if (--steps>0) {
+                setTimeout(() => step(), 1000);
+            }
+        });
+    }
+    step();
+
 
 
 }
