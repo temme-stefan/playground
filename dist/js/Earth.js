@@ -33541,8 +33541,8 @@ const getNextCityData = (callback) => {
             console.error(err);
         });
 };
-const  addInnerCity = ( city)=> {
-    city.add(new Mesh(new SphereGeometry(0.0005),new MeshStandardMaterial({color:0xff0000})));
+const  addInnerCity = ( city,size)=> {
+    city.add(new Mesh(new SphereGeometry(0.0005*size),new MeshStandardMaterial({color:0xff0000})));
     return;
 };
 
@@ -33562,10 +33562,7 @@ const createCity = (data)=>{
     const yL = zR;
     const zL = -xR;
     city.position.set(xL,yL,zL);
-    city.lookAt(new Vector3(0,0,0));
-    city.scale.multiplyScalar(data.population/1e6);
-
-    addInnerCity( city);
+    addInnerCity( city,data.population/1e6);
 };
 
 const getCityQuery = () => {
@@ -33579,7 +33576,7 @@ const init$1 = () => {
     scene$1 = scene;
     window.STAGE = STAGE;
     createEarth();
-    let steps=4;
+    let steps=10;
     const step = ()=>{
         getNextCityData((cities) => {
             console.log(cities);

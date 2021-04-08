@@ -53,8 +53,8 @@ const getNextCityData = (callback) => {
 }
 
 let loadedModel;
-const  addInnerCity = ( city)=> {
-    city.add(new Mesh(new SphereBufferGeometry(0.0005),new MeshStandardMaterial({color:0xff0000})));
+const  addInnerCity = ( city,size)=> {
+    city.add(new Mesh(new SphereBufferGeometry(0.0005*size),new MeshStandardMaterial({color:0xff0000})));
     return;
     if (loadedModel){
         city.add(loadedModel.clone());
@@ -97,14 +97,11 @@ const createCity = (data)=>{
     const yR = radius * Math.sin(polar) * Math.sin(azimuthal)
     const zR = radius * Math.cos(polar)
 
-    const xL = yR
-    const yL = zR
-    const zL = -xR
+    const xL = yR;
+    const yL = zR;
+    const zL = -xR;
     city.position.set(xL,yL,zL);
-    city.lookAt(new Vector3(0,0,0));
-    city.scale.multiplyScalar(data.population/1e6);
-
-    addInnerCity( city);
+    addInnerCity( city,data.population/1e6);
 }
 
 const getCityQuery = () => {
@@ -118,7 +115,7 @@ const init = () => {
     scene = STAGE.scene;
     window.STAGE = STAGE;
     createEarth();
-    let steps=4;
+    let steps=10;
     const step = ()=>{
         getNextCityData((cities) => {
             console.log(cities);
