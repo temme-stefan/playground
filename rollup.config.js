@@ -11,7 +11,10 @@ export default [
             sourceMap: 'inline',
         },
         plugins: [
-            serve('dist'),
+            serve({
+                contentBase:'dist',
+                port:3000
+            }),
             livereload('dist'),
         ]
     },

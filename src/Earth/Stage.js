@@ -23,10 +23,10 @@ function createControlls() {
 
     controls.screenSpacePanning = false;
 
-    controls.minDistance = 2;
+    // controls.minDistance = 2;
     controls.maxDistance = 10;
-    controls.enablePan = false;
-    controls.autoRotate = true;
+    // controls.enablePan = false;
+    // controls.autoRotate = true;
 
     // controls.maxPolarAngle = Math.PI / 2;
 }
@@ -40,6 +40,7 @@ function createRenderer() {
     renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0xffffff,1);
     document.body.appendChild(renderer.domElement);
 }
 
