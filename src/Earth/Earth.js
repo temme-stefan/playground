@@ -157,7 +157,7 @@ const init = (canvas, container) => {
             name: "Dortmund",
             latitude: 51.514244,
             longitude: 7.468429,
-            population: 37500000
+            population: 587010
 
         });
 
