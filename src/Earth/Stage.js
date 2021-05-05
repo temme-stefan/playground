@@ -2,7 +2,7 @@ import * as THREE from "three/build/three.module.js"
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js'
 
 
-let camera, scene, renderer, controls, dirLight, container;
+let camera, scene, renderer, controls, dirLight, container, starttime = Date.now(), defaultDistanz = 4;
 
 
 function createLights() {
@@ -35,12 +35,12 @@ function createCamera() {
     const {width, height} = getWidthHeight();
 
     camera = new THREE.PerspectiveCamera(60, width / height, 1, 1000);
-    camera.position.set(0, 0, 5);
+    camera.position.set(4, 2, -4).normalize().multiplyScalar(defaultDistanz);
 }
 
 function createRenderer() {
     const {width, height} = getWidthHeight();
-    renderer = new THREE.WebGLRenderer({antialias: true, alpha:true});
+    renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
 
     renderer.setPixelRatio(window.devicePixelRatio);
 
@@ -62,10 +62,9 @@ function init(aContainer) {
 }
 
 function getWidthHeight() {
-    if (container){
+    if (container) {
         return container.getBoundingClientRect();
-    }
-    else{
+    } else {
         const width = window.innerWidth;
         const height = window.innerHeight;
         return {width, height};
@@ -83,21 +82,46 @@ function onWindowResize() {
 
 }
 
-//
+let animationStarttime, animationDuration, afterAnimationDelay = 1000, animationRunning = false, animationTarget;
+
+/**
+ *
+ * @param point{THREE.Vector3}
+ */
+function animateToPoint(point, duration = 1000) {
+    animationTarget = new THREE.Vector3().copy(point).normalize().multiplyScalar(defaultDistanz);
+    animationStarttime = Date.now();
+    animationDuration = duration;
+    animationRunning = true;
+}
+
 
 function animate() {
 
     requestAnimationFrame(animate);
-    controls.update();
+    if (!animationRunning) {
+        controls.update();
+    } else {
+        const progress = (Date.now() - animationStarttime) / animationDuration;
+        if (progress < 1) {
+            camera.position.lerp(animationTarget, progress)
+            camera.lookAt(controls.target);
+        }
+        else if (progress > 1 && animationStarttime + animationDuration + afterAnimationDelay < Date.now()){
+            camera.position.copy(animationTarget)
+        }
+        else{
+            animationRunning=false;
+        }
+    }
     render();
 
 }
 
 function render() {
-    const timer = Date.now() * 0.0001;
-
-    dirLight.position.x = Math.cos(timer+Math.PI) * controls.autoRotateSpeed;
-    dirLight.position.z = Math.sin(timer+Math.PI) * controls.autoRotateSpeed;
+    const timer = (Date.now() - starttime) * 0.0001;
+    dirLight.position.x = Math.cos(timer) * controls.autoRotateSpeed;
+    dirLight.position.z = Math.sin(timer) * controls.autoRotateSpeed;
 
     dirLight.position.normalize();
 
@@ -106,4 +130,4 @@ function render() {
 
 }
 
-export {camera, scene, renderer, controls, init};
+export {camera, scene, renderer, controls, init, animateToPoint};

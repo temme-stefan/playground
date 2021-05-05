@@ -33421,7 +33421,7 @@ var MapControls = function ( object, domElement ) {
 MapControls.prototype = Object.create( EventDispatcher.prototype );
 MapControls.prototype.constructor = MapControls;
 
-let camera, scene, renderer, controls, dirLight, container;
+let camera, scene, renderer, controls, dirLight, container, starttime = Date.now(), defaultDistanz = 4;
 
 
 function createLights() {
@@ -33454,12 +33454,12 @@ function createCamera() {
     const {width, height} = getWidthHeight();
 
     camera = new PerspectiveCamera(60, width / height, 1, 1000);
-    camera.position.set(0, 0, 5);
+    camera.position.set(4, 2, -4).normalize().multiplyScalar(defaultDistanz);
 }
 
 function createRenderer() {
     const {width, height} = getWidthHeight();
-    renderer = new WebGLRenderer({antialias: true, alpha:true});
+    renderer = new WebGLRenderer({antialias: true, alpha: true});
 
     renderer.setPixelRatio(window.devicePixelRatio);
 
@@ -33481,10 +33481,9 @@ function init(aContainer) {
 }
 
 function getWidthHeight() {
-    if (container){
+    if (container) {
         return container.getBoundingClientRect();
-    }
-    else {
+    } else {
         const width = window.innerWidth;
         const height = window.innerHeight;
         return {width, height};
@@ -33502,21 +33501,46 @@ function onWindowResize() {
 
 }
 
-//
+let animationStarttime, animationDuration, afterAnimationDelay = 1000, animationRunning = false, animationTarget;
+
+/**
+ *
+ * @param point{THREE.Vector3}
+ */
+function animateToPoint(point, duration = 1000) {
+    animationTarget = new Vector3().copy(point).normalize().multiplyScalar(defaultDistanz);
+    animationStarttime = Date.now();
+    animationDuration = duration;
+    animationRunning = true;
+}
+
 
 function animate() {
 
     requestAnimationFrame(animate);
-    controls.update();
+    if (!animationRunning) {
+        controls.update();
+    } else {
+        const progress = (Date.now() - animationStarttime) / animationDuration;
+        if (progress < 1) {
+            camera.position.lerp(animationTarget, progress);
+            camera.lookAt(controls.target);
+        }
+        else if (progress > 1 && animationStarttime + animationDuration + afterAnimationDelay < Date.now()){
+            camera.position.copy(animationTarget);
+        }
+        else {
+            animationRunning=false;
+        }
+    }
     render();
 
 }
 
 function render() {
-    const timer = Date.now() * 0.0001;
-
-    dirLight.position.x = Math.cos(timer+Math.PI) * controls.autoRotateSpeed;
-    dirLight.position.z = Math.sin(timer+Math.PI) * controls.autoRotateSpeed;
+    const timer = (Date.now() - starttime) * 0.0001;
+    dirLight.position.x = Math.cos(timer) * controls.autoRotateSpeed;
+    dirLight.position.z = Math.sin(timer) * controls.autoRotateSpeed;
 
     dirLight.position.normalize();
 
@@ -33531,7 +33555,8 @@ var STAGE = /*#__PURE__*/Object.freeze({
 	get scene () { return scene; },
 	get renderer () { return renderer; },
 	get controls () { return controls; },
-	init: init
+	init: init,
+	animateToPoint: animateToPoint
 });
 
 let scene$1, cityContainer, cityList;
@@ -33552,7 +33577,6 @@ const createEarth = () => {
                 aoMap: loader.load("textures/8081_earthspec2k.jpg")
             })
     );
-    m.quaternion.setFromAxisAngle(new Vector3(0, 1, 0), Math.PI);
     scene$1.add(m);
 };
 
@@ -33596,9 +33620,22 @@ const getNextCityData = (callback) => {
         });
 };
 const addInnerCity = (city, size) => {
-    city.add(new Mesh(new SphereGeometry(0.005 * size), new MeshStandardMaterial({color: 0xff0000})));
+    city.add(new Mesh(new SphereGeometry(0.0005 * size), new MeshStandardMaterial({color: 0xff0000})));
     return;
 };
+
+function createCityLink(city, data) {
+    const tag = document.createElement('li');
+    const link = document.createElement('a');
+    tag.append(link);
+    link.href = "#";
+    link.addEventListener('click', (ev) => {
+        animateToPoint(city.position);
+        ev.preventDefault();
+    });
+    link.innerText = `${data.name} - ${data.population.toLocaleString()}`;
+    addToCityContainer(tag);
+}
 
 const createCity = (data) => {
     const city = new Group();
@@ -33617,12 +33654,10 @@ const createCity = (data) => {
     const zL = -xR;
     city.position.set(xL, yL, zL);
     addInnerCity(city, data.population / 1e6);
-
-    const tag = document.createElement('li');
-    tag.innerText = `${data.name} - ${data.population.toLocaleString()}`;
-    addToCityContainer(tag);
-
+    createCityLink(city, data);
 };
+
+
 
 const getCityQuery = () => {
     const data = JSON.stringify({
@@ -33643,7 +33678,7 @@ const init$1 = (canvas, container) => {
             name: "Dortmund",
             latitude: 51.514244,
             longitude: 7.468429,
-            population: 587010
+            population: 37500000
 
         });
 

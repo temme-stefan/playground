@@ -27,7 +27,6 @@ const createEarth = () => {
                 aoMap: loader.load("textures/8081_earthspec2k.jpg")
             })
     );
-    m.quaternion.setFromAxisAngle(new Vector3(0, 1, 0), Math.PI);
     scene.add(m);
 }
 
@@ -73,7 +72,7 @@ const getNextCityData = (callback) => {
 
 let loadedModel;
 const addInnerCity = (city, size) => {
-    city.add(new Mesh(new SphereBufferGeometry(0.005 * size), new MeshStandardMaterial({color: 0xff0000})));
+    city.add(new Mesh(new SphereBufferGeometry(0.0005 * size), new MeshStandardMaterial({color: 0xff0000})));
     return;
     if (loadedModel) {
         city.add(loadedModel.clone());
@@ -104,6 +103,19 @@ const addInnerCity = (city, size) => {
     })
 }
 
+function createCityLink(city, data) {
+    const tag = document.createElement('li')
+    const link = document.createElement('a')
+    tag.append(link);
+    link.href = "#";
+    link.addEventListener('click', (ev) => {
+        STAGE.animateToPoint(city.position);
+        ev.preventDefault();
+    })
+    link.innerText = `${data.name} - ${data.population.toLocaleString()}`;
+    addToCityContainer(tag);
+}
+
 const createCity = (data) => {
     const city = new Group();
     scene.add(city);
@@ -121,12 +133,10 @@ const createCity = (data) => {
     const zL = -xR;
     city.position.set(xL, yL, zL);
     addInnerCity(city, data.population / 1e6);
-
-    const tag = document.createElement('li')
-    tag.innerText = `${data.name} - ${data.population.toLocaleString()}`;
-    addToCityContainer(tag);
-
+    createCityLink(city, data);
 }
+
+
 
 const getCityQuery = () => {
     const data = JSON.stringify({
@@ -147,7 +157,7 @@ const init = (canvas, container) => {
             name: "Dortmund",
             latitude: 51.514244,
             longitude: 7.468429,
-            population: 587010
+            population: 37500000
 
         });
 
