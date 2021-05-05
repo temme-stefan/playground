@@ -9,13 +9,17 @@ import {
 } from "three/build/three.module.js";
 import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader";
 
-let scene;
+let scene, cityContainer, cityList;
 
+const addToCityContainer = (html, toCityList = true) => {
+
+    (toCityList ? cityList : cityContainer).appendChild(html)
+}
 
 const createEarth = () => {
     const loader = new TextureLoader();
     const m = new Mesh(
-        new SphereBufferGeometry(1, 20, 20),
+        new SphereBufferGeometry(1, 40, 40),
         new MeshStandardMaterial(
             {
                 map: loader.load("textures/8081_earthmap2k.jpg"),
@@ -23,10 +27,11 @@ const createEarth = () => {
                 aoMap: loader.load("textures/8081_earthspec2k.jpg")
             })
     );
+    m.quaternion.setFromAxisAngle(new Vector3(0, 1, 0), Math.PI);
     scene.add(m);
 }
 
-let endCursor="";
+let endCursor = "";
 
 const getNextCityData = (callback) => {
     const data = getCityQuery();
@@ -41,22 +46,36 @@ const getNextCityData = (callback) => {
         "mode": "cors",
         headers,
         "body": data
-    }).then(response => response.json())
-        .then(json => {
-            endCursor=json.data.populatedPlaces.pageInfo.endCursor
-            const cities = json.data.populatedPlaces.edges.map(e=>e.node);
-            callback(cities);
+    })
+        .then(response => {
+            if (response.ok) {
+                response.json().then(json => {
+                    endCursor = json.data?.populatedPlaces.pageInfo.endCursor
+                    const cities = json.data?.populatedPlaces.edges.map(e => e.node) ?? [];
+                    callback(cities);
+                })
+            } else {
+                response.json().then(({message}) => {
+                    console.error(message);
+                    const error = document.createElement('div');
+                    error.innerText = "Für heute kann ich keine Städte mehr finden. Komm morgen wieder.";
+                    error.className = "error"
+                    addToCityContainer(error, false);
+                })
+            }
+
         })
         .catch(err => {
             console.error(err);
+
         });
 }
 
 let loadedModel;
-const  addInnerCity = ( city,size)=> {
-    city.add(new Mesh(new SphereBufferGeometry(0.0005*size),new MeshStandardMaterial({color:0xff0000})));
+const addInnerCity = (city, size) => {
+    city.add(new Mesh(new SphereBufferGeometry(0.005 * size), new MeshStandardMaterial({color: 0xff0000})));
     return;
-    if (loadedModel){
+    if (loadedModel) {
         city.add(loadedModel.clone());
     }
     const loader = new GLTFLoader();
@@ -64,7 +83,7 @@ const  addInnerCity = ( city,size)=> {
         const innercity = model.scene;
         const posWrapper = new Group();
         posWrapper.add(innercity);
-        loadedModel=posWrapper;
+        loadedModel = posWrapper;
         city.add(loadedModel);
         innercity.quaternion.multiply(new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), -Math.PI / 2));
         innercity.updateMatrix(true);
@@ -85,13 +104,13 @@ const  addInnerCity = ( city,size)=> {
     })
 }
 
-const createCity = (data)=>{
+const createCity = (data) => {
     const city = new Group();
     scene.add(city);
-    const radius=1;
+    const radius = 1;
 
-    const polar= (90 -data.latitude )/180*Math.PI;
-    const azimuthal = (-data.longitude+90)/180*Math.PI;
+    const polar = (90 - data.latitude) / 180 * Math.PI;
+    const azimuthal = (-data.longitude + 90) / 180 * Math.PI;
 
     const xR = radius * Math.sin(polar) * Math.cos(azimuthal)
     const yR = radius * Math.sin(polar) * Math.sin(azimuthal)
@@ -100,8 +119,13 @@ const createCity = (data)=>{
     const xL = yR;
     const yL = zR;
     const zL = -xR;
-    city.position.set(xL,yL,zL);
-    addInnerCity( city,data.population/1e6);
+    city.position.set(xL, yL, zL);
+    addInnerCity(city, data.population / 1e6);
+
+    const tag = document.createElement('li')
+    tag.innerText = `${data.name} - ${data.population.toLocaleString()}`;
+    addToCityContainer(tag);
+
 }
 
 const getCityQuery = () => {
@@ -110,23 +134,35 @@ const getCityQuery = () => {
     });
     return data;
 }
-const init = () => {
-    STAGE.init();
+const init = (canvas, container) => {
+    STAGE.init(canvas);
+    cityContainer = container;
+    cityList = document.createElement('ul');
+    addToCityContainer(cityList, false);
     scene = STAGE.scene;
     window.STAGE = STAGE;
     createEarth();
-    let steps=10;
-    const step = ()=>{
+    createCity(
+        {
+            name: "Dortmund",
+            latitude: 51.514244,
+            longitude: 7.468429,
+            population: 587010
+
+        });
+
+    const step = () => {
         getNextCityData((cities) => {
-            console.log(cities);
-            cities.forEach(c=>createCity(c));
-            if (--steps>0) {
-                setTimeout(() => step(), 1000);
+            if (cities.length > 0) {
+                console.log(cities);
+                cities.filter(c => c.population >= 1e6).forEach(c => createCity(c));
+                if (cities[cities.length - 1].population >= 1e6) {
+                    setTimeout(() => step(), 1000);
+                }
             }
         });
     }
     step();
-
 
 
 }

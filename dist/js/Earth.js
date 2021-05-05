@@ -29348,6 +29348,20 @@ class DirectionalLight extends Light {
 
 DirectionalLight.prototype.isDirectionalLight = true;
 
+class AmbientLight extends Light {
+
+	constructor( color, intensity ) {
+
+		super( color, intensity );
+
+		this.type = 'AmbientLight';
+
+	}
+
+}
+
+AmbientLight.prototype.isAmbientLight = true;
+
 const LoaderUtils = {
 
 	decodeText: function ( array ) {
@@ -33407,12 +33421,13 @@ var MapControls = function ( object, domElement ) {
 MapControls.prototype = Object.create( EventDispatcher.prototype );
 MapControls.prototype.constructor = MapControls;
 
-let camera, scene, renderer, controls, dirLight;
+let camera, scene, renderer, controls, dirLight, container;
 
 
 function createLights() {
     dirLight = new DirectionalLight(0xffffff);
     dirLight.position.set(0, 0, 1);
+    scene.add(new AmbientLight(0xffffff, 1));
     scene.add(dirLight);
 
 }
@@ -33436,20 +33451,26 @@ function createControlls() {
 }
 
 function createCamera() {
-    camera = new PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+    const {width, height} = getWidthHeight();
+
+    camera = new PerspectiveCamera(60, width / height, 1, 1000);
     camera.position.set(0, 0, 5);
 }
 
 function createRenderer() {
-    renderer = new WebGLRenderer({antialias: true});
+    const {width, height} = getWidthHeight();
+    renderer = new WebGLRenderer({antialias: true, alpha:true});
+
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0xffffff,1);
-    document.body.appendChild(renderer.domElement);
+
+    renderer.setSize(width, height);
+    renderer.setClearColor(0xffffff, 0);
+    container.appendChild(renderer.domElement);
 }
 
-function init() {
+function init(aContainer) {
 
+    container = aContainer ?? document.body;
     scene = new Scene();
     createRenderer();
     createCamera();
@@ -33459,11 +33480,25 @@ function init() {
     animate();
 }
 
-function onWindowResize() {
+function getWidthHeight() {
+    if (container){
+        return container.getBoundingClientRect();
+    }
+    else {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        return {width, height};
+    }
 
-    camera.aspect = window.innerWidth / window.innerHeight;
+
+}
+
+function onWindowResize() {
+    const {width, height} = getWidthHeight();
+
+    camera.aspect = width / height;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(width, height);
 
 }
 
@@ -33480,8 +33515,8 @@ function animate() {
 function render() {
     const timer = Date.now() * 0.0001;
 
-    dirLight.position.x = Math.cos( timer ) * controls.autoRotateSpeed;
-    dirLight.position.z = Math.sin( timer ) *controls.autoRotateSpeed;
+    dirLight.position.x = Math.cos(timer+Math.PI) * controls.autoRotateSpeed;
+    dirLight.position.z = Math.sin(timer+Math.PI) * controls.autoRotateSpeed;
 
     dirLight.position.normalize();
 
@@ -33499,13 +33534,17 @@ var STAGE = /*#__PURE__*/Object.freeze({
 	init: init
 });
 
-let scene$1;
+let scene$1, cityContainer, cityList;
 
+const addToCityContainer = (html, toCityList = true) => {
+
+    (toCityList ? cityList : cityContainer).appendChild(html);
+};
 
 const createEarth = () => {
     const loader = new TextureLoader();
     const m = new Mesh(
-        new SphereGeometry(1, 20, 20),
+        new SphereGeometry(1, 40, 40),
         new MeshStandardMaterial(
             {
                 map: loader.load("textures/8081_earthmap2k.jpg"),
@@ -33513,10 +33552,11 @@ const createEarth = () => {
                 aoMap: loader.load("textures/8081_earthspec2k.jpg")
             })
     );
+    m.quaternion.setFromAxisAngle(new Vector3(0, 1, 0), Math.PI);
     scene$1.add(m);
 };
 
-let endCursor="";
+let endCursor = "";
 
 const getNextCityData = (callback) => {
     const data = getCityQuery();
@@ -33531,28 +33571,42 @@ const getNextCityData = (callback) => {
         "mode": "cors",
         headers,
         "body": data
-    }).then(response => response.json())
-        .then(json => {
-            endCursor=json.data.populatedPlaces.pageInfo.endCursor;
-            const cities = json.data.populatedPlaces.edges.map(e=>e.node);
-            callback(cities);
+    })
+        .then(response => {
+            if (response.ok) {
+                response.json().then(json => {
+                    endCursor = json.data?.populatedPlaces.pageInfo.endCursor;
+                    const cities = json.data?.populatedPlaces.edges.map(e => e.node) ?? [];
+                    callback(cities);
+                });
+            } else {
+                response.json().then(({message}) => {
+                    console.error(message);
+                    const error = document.createElement('div');
+                    error.innerText = "Für heute kann ich keine Städte mehr finden. Komm morgen wieder.";
+                    error.className = "error";
+                    addToCityContainer(error, false);
+                });
+            }
+
         })
         .catch(err => {
             console.error(err);
+
         });
 };
-const  addInnerCity = ( city,size)=> {
-    city.add(new Mesh(new SphereGeometry(0.0005*size),new MeshStandardMaterial({color:0xff0000})));
+const addInnerCity = (city, size) => {
+    city.add(new Mesh(new SphereGeometry(0.005 * size), new MeshStandardMaterial({color: 0xff0000})));
     return;
 };
 
-const createCity = (data)=>{
+const createCity = (data) => {
     const city = new Group();
     scene$1.add(city);
-    const radius=1;
+    const radius = 1;
 
-    const polar= (90 -data.latitude )/180*Math.PI;
-    const azimuthal = (-data.longitude+90)/180*Math.PI;
+    const polar = (90 - data.latitude) / 180 * Math.PI;
+    const azimuthal = (-data.longitude + 90) / 180 * Math.PI;
 
     const xR = radius * Math.sin(polar) * Math.cos(azimuthal);
     const yR = radius * Math.sin(polar) * Math.sin(azimuthal);
@@ -33561,8 +33615,13 @@ const createCity = (data)=>{
     const xL = yR;
     const yL = zR;
     const zL = -xR;
-    city.position.set(xL,yL,zL);
-    addInnerCity( city,data.population/1e6);
+    city.position.set(xL, yL, zL);
+    addInnerCity(city, data.population / 1e6);
+
+    const tag = document.createElement('li');
+    tag.innerText = `${data.name} - ${data.population.toLocaleString()}`;
+    addToCityContainer(tag);
+
 };
 
 const getCityQuery = () => {
@@ -33571,23 +33630,35 @@ const getCityQuery = () => {
     });
     return data;
 };
-const init$1 = () => {
-    init();
+const init$1 = (canvas, container) => {
+    init(canvas);
+    cityContainer = container;
+    cityList = document.createElement('ul');
+    addToCityContainer(cityList, false);
     scene$1 = scene;
     window.STAGE = STAGE;
     createEarth();
-    let steps=10;
-    const step = ()=>{
+    createCity(
+        {
+            name: "Dortmund",
+            latitude: 51.514244,
+            longitude: 7.468429,
+            population: 587010
+
+        });
+
+    const step = () => {
         getNextCityData((cities) => {
-            console.log(cities);
-            cities.forEach(c=>createCity(c));
-            if (--steps>0) {
-                setTimeout(() => step(), 1000);
+            if (cities.length > 0) {
+                console.log(cities);
+                cities.filter(c => c.population >= 1e6).forEach(c => createCity(c));
+                if (cities[cities.length - 1].population >= 1e6) {
+                    setTimeout(() => step(), 1000);
+                }
             }
         });
     };
     step();
-
 
 
 };

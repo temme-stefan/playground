@@ -1,19 +1,46 @@
 <html lang="en">
 <head>
-    <title>three.js webgl - earth</title>
+    <title>Earth - cities of Millions</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <style>
         body {
+            background: url("images/milky-way-2695569_1280.jpg");
             margin: 0;
+            display: grid;
+            grid-template-columns: [col] 1fr [col] auto;
+            grid-template-rows:[row] 1fr;
+            position: absolute;
+            left:0;
+            right:0;
+            top:0;
+            bottom:0;
+        }
+        main{
+            grid-column: col 1 /span 1;
+            grid-row: row 1 /span 1;
+            overflow:hidden;
+        }
+        aside{
+            grid-column: col 2 /span 1;
+            min-width:300px;
+            max-width: 30vw;
+            grid-row: row 1 /span 1;
         }
     </style>
 </head>
 <body>
 <script type="module">
     import {init} from "./js/Earth.js"
-    init();
+    init(document.getElementById("threeContainer"),document.getElementById("cityContainer"));
 </script>
+<main id="threeContainer">
+</main>
+<aside>
+    <h2>Cities:</h2>
+    <article id="cityContainer">
 
+    </article>
+</aside>
 </body>
 </html>

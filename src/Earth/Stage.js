@@ -1,14 +1,14 @@
 import * as THREE from "three/build/three.module.js"
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js'
 
 
-
-let camera, scene, renderer, controls, dirLight;
+let camera, scene, renderer, controls, dirLight, container;
 
 
 function createLights() {
     dirLight = new THREE.DirectionalLight(0xffffff);
     dirLight.position.set(0, 0, 1);
+    scene.add(new THREE.AmbientLight(0xffffff, 1));
     scene.add(dirLight);
 
 }
@@ -32,20 +32,26 @@ function createControlls() {
 }
 
 function createCamera() {
-    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+    const {width, height} = getWidthHeight();
+
+    camera = new THREE.PerspectiveCamera(60, width / height, 1, 1000);
     camera.position.set(0, 0, 5);
 }
 
 function createRenderer() {
-    renderer = new THREE.WebGLRenderer({antialias: true});
+    const {width, height} = getWidthHeight();
+    renderer = new THREE.WebGLRenderer({antialias: true, alpha:true});
+
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0xffffff,1);
-    document.body.appendChild(renderer.domElement);
+
+    renderer.setSize(width, height);
+    renderer.setClearColor(0xffffff, 0);
+    container.appendChild(renderer.domElement);
 }
 
-function init() {
+function init(aContainer) {
 
+    container = aContainer ?? document.body;
     scene = new THREE.Scene();
     createRenderer();
     createCamera();
@@ -55,11 +61,25 @@ function init() {
     animate()
 }
 
-function onWindowResize() {
+function getWidthHeight() {
+    if (container){
+        return container.getBoundingClientRect();
+    }
+    else{
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        return {width, height};
+    }
 
-    camera.aspect = window.innerWidth / window.innerHeight;
+
+}
+
+function onWindowResize() {
+    const {width, height} = getWidthHeight();
+
+    camera.aspect = width / height;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(width, height);
 
 }
 
@@ -76,8 +96,8 @@ function animate() {
 function render() {
     const timer = Date.now() * 0.0001;
 
-    dirLight.position.x = Math.cos( timer ) * controls.autoRotateSpeed;
-    dirLight.position.z = Math.sin( timer ) *controls.autoRotateSpeed;
+    dirLight.position.x = Math.cos(timer+Math.PI) * controls.autoRotateSpeed;
+    dirLight.position.z = Math.sin(timer+Math.PI) * controls.autoRotateSpeed;
 
     dirLight.position.normalize();
 
