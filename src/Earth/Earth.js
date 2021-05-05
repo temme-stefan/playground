@@ -137,7 +137,6 @@ const createCity = (data) => {
 }
 
 
-
 const getCityQuery = () => {
     const data = JSON.stringify({
         "query": "query{\n  populatedPlaces(\n    types:[\"CITY\"]\n    sort:\"-population\"\n    first:10\n" + (endCursor !== "" ? "after:\"" + endCursor + "\"\n" : "") + "  ){\n    totalCount\n    pageInfo{\n      startCursor\n      endCursor\n      hasNextPage\n      hasPreviousPage\n    }\n        edges {\n          node {\n            name\n            population\n            latitude\n            longitude\n          }\n        }\n  }\n}"
@@ -161,12 +160,14 @@ const init = (canvas, container) => {
 
         });
 
+    let maxsteps = 10;
+
     const step = () => {
         getNextCityData((cities) => {
             if (cities.length > 0) {
                 console.log(cities);
                 cities.filter(c => c.population >= 1e6).forEach(c => createCity(c));
-                if (cities[cities.length - 1].population >= 1e6) {
+                if (cities[cities.length - 1].population >= 1e6 && maxsteps-->0) {
                     setTimeout(() => step(), 1000);
                 }
             }
