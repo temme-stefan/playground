@@ -5,50 +5,55 @@
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <style>
         body {
-            background: url("images/milky-way-2695569_1280.jpg") center/cover no-repeat ;
+            background: url("images/milky-way-2695569_1280.jpg") center/cover no-repeat;
             margin: 0;
             display: grid;
-            grid-template-columns: [col] 1fr [col] auto;
-            grid-template-rows:[row] 1fr;
+            grid-template-areas:    "scene aside"
+                                    "scene aside";
+            grid-template-columns: [col] 1fr [col] minmax(30vw,300px);
+            grid-template-rows:[row] 6fr [row] 4fr;
             position: absolute;
-            left:0;
-            right:0;
-            top:0;
-            bottom:0;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
         }
-        main{
-            grid-column: col 1 /span 1;
-            grid-row: row 1 /span 1;
-            overflow:hidden;
+
+        main {
+            grid-area: scene;
+            overflow: hidden;
         }
-        aside{
-            --bgBlur: var(--bgAside, rgba(255,255,255,0.8));
-            grid-column: col 2 /span 1;
-            min-width:300px;
-            max-width: 30vw;
-            grid-row: row 1 /span 1;
-            padding:30px;
+
+        aside {
+            grid-area: aside;
+            --bgBlur: var(--bgAside, rgba(255, 255, 255, 0.8));
+            padding: 30px;
             background: var(--bgBlur);
             box-shadow: 0px 0px 20px 20px var(--bgBlur);
+            overflow: auto;
         }
-        #cityContainer{
-            max-height: 90vh;
-            scroll:auto;
+
+        @media (orientation: portrait) {
+            body {
+                grid-template-areas:    "scene scene"
+                                        "aside aside";
+            }
         }
     </style>
 </head>
 <body>
 <script type="module">
     import {init} from "./js/Earth.js"
-    init(document.getElementById("threeContainer"),document.getElementById("cityContainer"));
+
+    init(document.getElementById("threeContainer"), document.getElementById("cityContainer"));
 </script>
 <main id="threeContainer">
 </main>
 <aside>
     <h2>Cities:</h2>
-    <article id="cityContainer">
+    <nav id="cityContainer">
 
-    </article>
+    </nav>
 </aside>
 </body>
 </html>
