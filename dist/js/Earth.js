@@ -33505,7 +33505,7 @@ let animationStarttime, animationDuration, afterAnimationDelay = 1000, animation
 
 /**
  *
- * @param point{THREE.Vector3}
+ * @param point{Vector3}
  */
 function animateToPoint(point, duration = 1000) {
     animationTarget = new Vector3().copy(point).normalize().multiplyScalar(camera.position.length());
@@ -33523,15 +33523,13 @@ function animate() {
     } else {
         const progress = (Date.now() - animationStarttime) / animationDuration;
         if (progress < 1) {
-            const orbit=animationTarget.length();
-            camera.position.lerp(animationTarget, progress).clampLength(orbit,orbit);
+            const orbit = animationTarget.length();
+            camera.position.lerp(animationTarget, progress).clampLength(orbit, orbit);
             camera.lookAt(controls.target);
-        }
-        else if (progress > 1 && animationStarttime + animationDuration + afterAnimationDelay < Date.now()){
+        } else if (progress > 1 && animationStarttime + animationDuration + afterAnimationDelay < Date.now()) {
             camera.position.copy(animationTarget);
-        }
-        else {
-            animationRunning=false;
+        } else {
+            animationRunning = false;
         }
     }
     render();

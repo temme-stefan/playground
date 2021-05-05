@@ -1,4 +1,11 @@
-import * as THREE from "three/build/three.module.js"
+import {
+    DirectionalLight,
+    AmbientLight,
+    PerspectiveCamera,
+    WebGLRenderer,
+    Scene,
+    Vector3
+} from "three/build/three.module.js"
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js'
 
 
@@ -6,9 +13,9 @@ let camera, scene, renderer, controls, dirLight, container, starttime = Date.now
 
 
 function createLights() {
-    dirLight = new THREE.DirectionalLight(0xffffff);
+    dirLight = new DirectionalLight(0xffffff);
     dirLight.position.set(0, 0, 1);
-    scene.add(new THREE.AmbientLight(0xffffff, 1));
+    scene.add(new AmbientLight(0xffffff, 1));
     scene.add(dirLight);
 
 }
@@ -34,13 +41,13 @@ function createControlls() {
 function createCamera() {
     const {width, height} = getWidthHeight();
 
-    camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 100);
+    camera = new PerspectiveCamera(60, width / height, 0.1, 100);
     camera.position.set(4, 2, -4).normalize().multiplyScalar(defaultDistanz);
 }
 
 function createRenderer() {
     const {width, height} = getWidthHeight();
-    renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+    renderer = new WebGLRenderer({antialias: true, alpha: true});
 
     renderer.setPixelRatio(window.devicePixelRatio);
 
@@ -52,7 +59,7 @@ function createRenderer() {
 function init(aContainer) {
 
     container = aContainer ?? document.body;
-    scene = new THREE.Scene();
+    scene = new Scene();
     createRenderer();
     createCamera();
     createControlls();
@@ -86,10 +93,10 @@ let animationStarttime, animationDuration, afterAnimationDelay = 1000, animation
 
 /**
  *
- * @param point{THREE.Vector3}
+ * @param point{Vector3}
  */
 function animateToPoint(point, duration = 1000) {
-    animationTarget = new THREE.Vector3().copy(point).normalize().multiplyScalar(camera.position.length());
+    animationTarget = new Vector3().copy(point).normalize().multiplyScalar(camera.position.length());
     animationStarttime = Date.now();
     animationDuration = duration;
     animationRunning = true;
@@ -104,15 +111,13 @@ function animate() {
     } else {
         const progress = (Date.now() - animationStarttime) / animationDuration;
         if (progress < 1) {
-            const orbit=animationTarget.length();
-            camera.position.lerp(animationTarget, progress).clampLength(orbit,orbit);
+            const orbit = animationTarget.length();
+            camera.position.lerp(animationTarget, progress).clampLength(orbit, orbit);
             camera.lookAt(controls.target);
-        }
-        else if (progress > 1 && animationStarttime + animationDuration + afterAnimationDelay < Date.now()){
+        } else if (progress > 1 && animationStarttime + animationDuration + afterAnimationDelay < Date.now()) {
             camera.position.copy(animationTarget)
-        }
-        else{
-            animationRunning=false;
+        } else {
+            animationRunning = false;
         }
     }
     render();
