@@ -153,10 +153,10 @@ const init = (canvas, container) => {
     createEarth();
     createCity(
         {
-            name: "Dortmund",
-            latitude: 51.514244,
-            longitude: 7.468429,
-            population: 587010
+            name: "Ruhrgebiet",
+            latitude: 51.5175,
+            longitude: 7.145,
+            population: 5112050
 
         });
 
