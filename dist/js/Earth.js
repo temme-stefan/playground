@@ -33453,7 +33453,7 @@ function createControlls() {
 function createCamera() {
     const {width, height} = getWidthHeight();
 
-    camera = new PerspectiveCamera(60, width / height, 1, 1000);
+    camera = new PerspectiveCamera(60, width / height, 0.1, 100);
     camera.position.set(4, 2, -4).normalize().multiplyScalar(defaultDistanz);
 }
 
