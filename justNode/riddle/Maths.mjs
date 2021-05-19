@@ -19,7 +19,7 @@ const _permCache = x=> {
 };
 
 /**
- * Get all Permutations of an Array. Duplicates are not filtered.
+ * Get all Permutations of an Array. Duplicates are not filtered. Result elements.length! x elements.length
  * @param elements {Object[]}
  * @returns {Object[][]}
  */
@@ -30,22 +30,19 @@ export const  permutations= (elements)=>{
 
 
 /**
- *
- * @param numberOfElementsVector
- * @param n
- * @returns {any[]}
+ * @param numberOfElementsVector {number[]}
+ * @param n {number}
+ * @returns {number[]}
  */
 export const nthCombinationVector = (numberOfElementsVector, n) => {
     const length = numberOfElementsVector.length;
-    const vector = new Array(length);
-    for (let i = 0; i < length; i++) {
+    const vector = Array.from(numberOfElementsVector,_=>0);
+    let i=0;
+    while (n>0 && i<length){
         const number = numberOfElementsVector[i];
-        if (number > 0) {
-            vector[i] = n % number;
-            n = Math.floor(n / number);
-        } else {
-            vector[i] = 0;
-        }
+        vector[i] = n % number;
+        n = Math.floor(n / number);
+        i++;
     }
     return vector;
 }
