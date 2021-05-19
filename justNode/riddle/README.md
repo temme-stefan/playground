@@ -1,6 +1,7 @@
 # Riddle of the Magic Door
 
-<img src="Riddle.jpg" alt="the door riddle"/>
+![the door riddle](Riddle.jpg)
+
 
 Place each tile to the grid. Adjacent colors must match. Tiles may be rotated.
 
