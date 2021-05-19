@@ -2,7 +2,7 @@
 
 <img src="Riddle.jpg" alt="the door riddle"/>
 
-Place each tile to the grid. Adjacent colors must match.
+Place each tile to the grid. Adjacent colors must match. Tiles may be rotated.
 
 ## Implementation
 Nondeterministic, partial correct algorithm\
