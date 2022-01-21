@@ -2,6 +2,7 @@
 <head>
     <title>PrimalSolver</title>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
 </head>
 <style>
     * {
@@ -26,6 +27,13 @@
 
     #proposingList button {
         letter-spacing: 0.3rem;
+        width: 150px;
+    }
+
+    #numbers {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     #numbers button {
@@ -37,15 +45,23 @@
         display: grid;
         max-width: 1200px;
         margin: auto;
+        margin-bottom: 2rem;
         grid-template:
             "header aside" 80px
             "main aside" 1fr /1fr 200px
+    }
+
+    @media screen and (max-width: 600px) {
+        body {
+            display: block;
+        }
     }
 
     header {
         grid-area: header;
         display: flex;
         justify-content: space-around;
+        text-align: center;
     }
 
     td > button {
@@ -78,6 +94,7 @@
     }
 
     aside {
+        text-align: center;
         grid-area: aside;
         display: flex;
         flex-direction: column;
@@ -85,11 +102,14 @@
 
     nav {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
     }
 </style>
 <body>
-<header><h1>A Solving Helper for <a href="https://converged.yt/primel/" rel="external" target="_blank">Primal</a></h1></header>
+<header><h1>A Solving Helper for <a href="https://converged.yt/primel/" rel="external" target="_blank">Primal</a></h1>
+</header>
 <main>
     <table>
         <tr>
