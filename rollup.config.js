@@ -19,6 +19,14 @@ export default [
         ]
     },
     {
+        input: "src/PrimalSolver/primalCracker.js",
+        output: {
+            file: "dist/js/primalCracker.js",
+            format: "es",
+            sourceMap: 'inline',
+        }
+    },
+    {
         input: "src/HoudiniPaint/Crossed.js",
         output: {
             file: "dist/js/Crossed.js",

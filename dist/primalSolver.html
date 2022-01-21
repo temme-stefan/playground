@@ -1,0 +1,349 @@
+<html lang="en">
+<head>
+    <title>PrimalSolver</title>
+    <meta charset="utf-8">
+</head>
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    button {
+        border-radius: 0.25rem;
+        height: 3.5rem;
+        background: lightgray;
+        color: rgb(148, 163, 184);
+        border: 2px solid white;
+        font-weight: bold;
+        font-size: 1.125rem;
+        line-height: 1.75rem;
+    }
+
+    .actions button {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    #proposingList button {
+        letter-spacing: 0.3rem;
+    }
+
+    #numbers button {
+        width: 3.5rem;
+    }
+
+    body {
+        font-family: sans-serif;
+        display: grid;
+        max-width: 1200px;
+        margin: auto;
+        grid-template:
+            "header aside" 80px
+            "main aside" 1fr /1fr 200px
+    }
+
+    header {
+        grid-area: header;
+        display: flex;
+        justify-content: space-around;
+    }
+
+    td > button {
+        width: 3.5rem;
+        height: 3.5rem;
+        border-color: rgb(148, 163, 184);
+        color: rgb(148, 163, 184);
+    }
+
+    .rowComplete td > button {
+        border: 0;
+        background: rgb(148, 163, 184);
+        color: white;
+    }
+
+    .rowComplete td > button.here {
+        background: rgb(34, 197, 94);
+    }
+
+    .rowComplete td > button.somewhere {
+        background: rgb(234, 179, 8);
+    }
+
+    main {
+        grid-area: main;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        align-items: center;
+    }
+
+    aside {
+        grid-area: aside;
+        display: flex;
+        flex-direction: column;
+    }
+
+    nav {
+        display: flex;
+        flex-direction: column;
+    }
+</style>
+<body>
+<header><h1>A Cracker for <a href="https://converged.yt/primel/" rel="external" target="_blank">Primal</a></h1></header>
+<main>
+    <table>
+        <tr>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+            <td>
+                <button></button>
+            </td>
+        </tr>
+    </table>
+    <div id="numbers">
+        <button>1</button>
+        <button>2</button>
+        <button>3</button>
+        <button>4</button>
+        <button>5</button>
+        <button>6</button>
+        <button>7</button>
+        <button>8</button>
+        <button>9</button>
+        <button>0</button>
+    </div>
+    <div class="actions">
+        <button id="delete">Delete</button>
+        <button id=proposer>Propose new</button>
+    </div>
+</main>
+<aside>
+    <h2>Proposed primes</h2>
+    <nav id="proposingList">
+
+    </nav>
+</aside>
+<script type="module">
+    import {getAtRestraint, getNotRestraint, getProposals, getSomeButRestraint} from "./js/primalCracker.js";
+
+    document.addEventListener("DOMContentLoaded", () => {
+
+        updateProposal();
+        [...document.getElementById('numbers').getElementsByTagName("button")].forEach(btn => {
+            btn.addEventListener("click", (ev) => setContent(ev.target.innerText));
+        });
+        document.getElementById("delete").addEventListener("click", () => removeLast());
+        document.getElementById("proposer").addEventListener("click", () => updateProposal());
+        [...document.getElementsByTagName("td")].forEach(td => {
+            td.getElementsByTagName("button")[0].addEventListener("click", (ev) => {
+                rotateClasses(ev.target);
+            })
+        });
+
+        document.addEventListener("keyup", ev => {
+            if (["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"].includes(ev.key)) {
+                setContent(ev.key);
+            }
+            if (ev.key == "Backspace") {
+                removeLast()
+            }
+            if (ev.key == "Enter") {
+                updateProposal();
+            }
+        })
+
+        function rotateClasses(element) {
+            if (element.innerText != "" && element.parentElement.parentElement.classList.contains("rowComplete")) {
+                const classes = [...element.classList];
+                if (classes.length == 0) {
+                    element.classList.toggle("somewhere");
+                } else if (classes[0] == "somewhere") {
+                    element.classList.toggle("somewhere");
+                    element.classList.toggle("here");
+                } else {
+                    element.classList.toggle("here");
+                }
+
+            }
+        }
+
+        function setContent(s) {
+            const td = document.querySelector("td>button:empty");
+            if (td) {
+                td.textContent = s;
+                if (td.parentElement == td.parentElement.parentElement.lastElementChild) {
+                    td.parentElement.parentElement.classList.toggle("rowComplete");
+                }
+            }
+        }
+
+        function removeLast() {
+            const td = [...document.querySelectorAll("td>button:not(:empty)")].reverse()[0];
+            if (td) {
+                td.textContent = "";
+                if (td.parentElement == td.parentElement.parentElement.lastElementChild) {
+                    td.parentElement.parentElement.classList.toggle("rowComplete");
+                    [...td.parentElement.parentElement.getElementsByTagName("button")].forEach(t => {
+                        t.classList.remove(...t.classList);
+                    })
+
+                }
+            }
+        }
+
+
+        function fillRow(s) {
+            const td = document.querySelector("td>button:empty");
+            if (td) {
+                [...td.parentElement.parentElement.getElementsByTagName("button")].forEach((td, i) => {
+                    td.textContent = s[i];
+                })
+                td.parentElement.parentElement.classList.toggle("rowComplete");
+            }
+        }
+
+        function getRestraints() {
+            const r = Array.from({length: 10}, _ => {
+                return {here: [], not_here_but: [], not_here: []}
+            });
+            [...document.getElementsByClassName("rowComplete")].forEach(row => {
+                [...row.getElementsByTagName("button")].forEach((button, i) => {
+                    const classes = [...button.classList];
+                    const val = parseInt(button.innerText);
+                    if (classes.includes("here")) {
+                        r[val].here.push(i);
+                    } else if (classes.includes("somewhere")) {
+                        r[val].not_here_but.push(i);
+                    } else {
+                        r[val].not_here.push(i);
+                    }
+                })
+            });
+            const restraint = [];
+            r.forEach(({here, not_here_but, not_here}, val) => {
+                restraint.push(...here.map(i => getAtRestraint(val, i)));
+                restraint.push(...not_here_but.map(i => getSomeButRestraint(val, i)));
+                if (here.length == 0 && not_here.length > 0) {
+                    restraint.push(getNotRestraint(val));
+                }
+                if (here.length > 0 && not_here.length > 0) {
+                    restraint.push(...not_here.map(i => getSomeButRestraint(val, i)));
+                }
+            })
+
+            return restraint;
+        }
+
+        function updateProposal() {
+            const l = document.getElementById("proposingList");
+            while (l.firstChild && l.removeChild(l.firstChild)) ;
+            getProposals(getRestraints()).filter((x, i) => i < 10).forEach(x => {
+                const a = document.createElement("button");
+                a.innerText = x;
+                a.addEventListener("click", (ev) => {
+                    ev.preventDefault();
+                    fillRow(x);
+                });
+                l.append(a);
+
+            })
+        }
+    })
+</script>
+</body>
+</html>
