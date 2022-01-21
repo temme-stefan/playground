@@ -13,6 +13,6 @@
   "scripts": {
     "build": "rollup --config",
     "dev": "rollup --config --watch",
-    "deploy": "ssh ftp313903-2751562@webhosting39.1blu.de \"rm -rf ~/www/playground/*\" && scp -r dist/* ftp313903-2751562@webhosting39.1blu.de:~/www/playground"
+    "deploy": "ssh u106909590@access895651998.webspace-data.io \"rm -rf ~/staticSites/playground/*\" && scp -r dist/* u106909590@access895651998.webspace-data.io:~/staticSites/playground"
   }
 }
