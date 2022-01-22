@@ -108,7 +108,7 @@
     }
 </style>
 <body>
-<header><h1>A Solving Helper for <a href="https://converged.yt/primel/" rel="external" target="_blank">Primal</a></h1>
+<header><h1>A Solving Helper for <a href="https://converged.yt/primel/" rel="external" target="_blank">Primel</a></h1>
 </header>
 <main>
     <table>
@@ -342,7 +342,7 @@
                     restraint.push(getNotRestraint(val));
                 }
                 if (here.length > 0 && not_here.length > 0) {
-                    restraint.push(...not_here.map(i => getSomeButRestraint(val, i)));
+                    restraint.push(...[0,1,2,3,4].filter(x=>!here.includes(x)).map(i => getSomeButRestraint(val, i)));
                 }
             })
 
