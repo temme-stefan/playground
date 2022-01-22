@@ -19,9 +19,9 @@ export default [
         ]
     },
     {
-        input: "src/PrimalSolver/primalCracker.js",
+        input: "src/PrimalSolver/proposer.js",
         output: {
-            file: "dist/js/primalCracker.js",
+            file: "dist/js/proposer.js",
             format: "es",
             sourceMap: 'inline',
         }
