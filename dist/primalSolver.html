@@ -9,7 +9,7 @@
         box-sizing: border-box;
     }
 
-    button {
+    button,select {
         border-radius: 0.25rem;
         height: 3.5rem;
         background: lightgray;
@@ -20,9 +20,16 @@
         line-height: 1.75rem;
     }
 
+
     .actions button {
         padding-left: 1rem;
         padding-right: 1rem;
+    }
+
+    select{
+        min-width: 150px;
+        padding-left:1rem;
+        padding-right:1rem;
     }
 
     #proposingList button {
@@ -48,7 +55,7 @@
         margin: auto;
         margin-bottom: 2rem;
         grid-template:
-            "header aside" 80px
+            "header form" 80px
             "main aside" 1fr /1fr 200px
     }
 
@@ -56,6 +63,13 @@
         body {
             display: block;
         }
+    }
+
+    form {
+        grid-area: form;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     header {
@@ -111,6 +125,9 @@
 <body>
 <header><h1>A Solving Helper for <a href="https://converged.yt/primel/" rel="external" target="_blank">Primel</a></h1>
 </header>
+<form>
+    <select id="chooser"></select>
+</form>
 <main>
     <table>
         <tr>
@@ -238,25 +255,31 @@
         getSomeButRestraint,
         setDictionary
     } from "./js/proposer.js";
-    import {primes} from "./dicitionaries/primes.js";
+
+    const available = new Map([
+        ["primes", ["Primel", "https://converged.yt/primel/", "primes.json"]],
+        ["wordle_de", ["Wordle (DE)", "https://wordle-spielen.de/", "wordle-spielen.de.json"]],
+
+    ]);
 
     document.addEventListener("DOMContentLoaded", () => {
-        setDictionary(primes);
-
-        document.getElementById('letters').append(
-            ...getAlphabet().map(letter => {
-                const b = document.createElement("button");
-                b.textContent = letter;
-                b.addEventListener("click", () => setContent(b));
-                return b;
+        document.getElementById("chooser").addEventListener("change", (ev) => {
+            updateDictionary(ev.target.value);
+        })
+        document.getElementById("chooser").append(...
+            [...available.entries()].map(([key, [lable]], i) => {
+                const o = document.createElement("option");
+                o.textContent = lable;
+                o.setAttribute("value", key);
+                if (i == 0) {
+                    o.setAttribute("selected", "selected");
+                    updateDictionary(key);
+                }
+                return o;
             })
         );
 
 
-        updateProposal();
-        [...document.getElementById('letters').getElementsByTagName("button")].forEach(btn => {
-            btn.addEventListener("click", (ev) => setContent(ev.target.innerText));
-        });
         document.getElementById("delete").addEventListener("click", () => removeLast());
         document.getElementById("proposer").addEventListener("click", () => updateProposal());
         [...document.getElementsByTagName("td")].forEach(td => {
@@ -276,6 +299,27 @@
                 updateProposal();
             }
         })
+
+        async function updateDictionary(key) {
+            reset();
+            const [lable, url, dict] = available.get(key);
+            const link = document.querySelectorAll("h1>a")[0];
+            link.textContent = lable;
+            link.setAttribute("href", url);
+            const words = await fetch(`./dictionaries/${dict}`).then(resp => resp.json())
+            setDictionary(words);
+            const letters = document.getElementById('letters');
+            while (letters.firstChild && letters.removeChild(letters.firstChild)) ;
+            letters.append(
+                ...getAlphabet().map(letter => {
+                    const b = document.createElement("button");
+                    b.textContent = letter;
+                    b.addEventListener("click", () => setContent(letter));
+                    return b;
+                })
+            );
+            updateProposal();
+        }
 
         function rotateClasses(element) {
             if (element.innerText != "" && element.parentElement.parentElement.classList.contains("rowComplete")) {
@@ -300,6 +344,10 @@
                     td.parentElement.parentElement.classList.toggle("rowComplete");
                 }
             }
+        }
+
+        function reset() {
+            [...document.querySelectorAll("td>button:not(:empty)")].forEach(c => removeLast());
         }
 
         function removeLast() {
@@ -328,24 +376,25 @@
         }
 
         function getRestraints() {
-            const r = Array.from({length: 10}, _ => {
-                return {here: [], not_here_but: [], not_here: []}
-            });
+            const a = getAlphabet();
+            const r = new Map(Array.from(a, l => {
+                return [l, {here: [], not_here_but: [], not_here: []}]
+            }));
             [...document.getElementsByClassName("rowComplete")].forEach(row => {
                 [...row.getElementsByTagName("button")].forEach((button, i) => {
                     const classes = [...button.classList];
-                    const val = parseInt(button.innerText);
+                    const t = r.get(button.innerText);
                     if (classes.includes("here")) {
-                        r[val].here.push(i);
+                        t.here.push(i);
                     } else if (classes.includes("somewhere")) {
-                        r[val].not_here_but.push(i);
+                        t.not_here_but.push(i);
                     } else {
-                        r[val].not_here.push(i);
+                        t.not_here.push(i);
                     }
                 })
             });
             const restraint = [];
-            r.forEach(({here, not_here_but, not_here}, val) => {
+            [...r.entries()].forEach(([val, {here, not_here_but, not_here}]) => {
                 restraint.push(...here.map(i => getAtRestraint(val, i)));
                 restraint.push(...not_here_but.map(i => getSomeButRestraint(val, i)));
                 if (here.length == 0 && not_here.length > 0) {
