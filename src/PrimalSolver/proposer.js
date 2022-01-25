@@ -2,7 +2,7 @@ const dictionary = [];
 const alphabet = [];
 
 /**
-  * @param dict {string[]}
+ * @param dict {string[]}
  */
 export function setDictionary(dict) {
     dictionary.splice(0, dictionary.length, ...dict);
@@ -36,39 +36,93 @@ function getDistribution(words) {
     return distribution;
 }
 
-function getScore(word, distribution) {
+function getDistributionScore(word, distribution) {
     return word.split("").map(s => parseInt(s)).reduce((a, v, i) => a + distribution[i][v], 0);
 }
 
 
-function getSorted([...words], distribution) {
-    words.sort((a, b) => Math.sign(getScore(b, distribution) - getScore(a, distribution)));
-    return words;
-}
-
-function filterWords(words, ...restraints) {
+/**
+ *
+ * @param words {string[]}
+ * @param restraints {{function(string):boolean}[]}
+ * @return {string[]}
+ */
+function filterWords(words, restraints) {
     const restraint = restraints.reduce((a, f) => (x) => a(x) && f(x), (x) => true);
     return words.filter(restraint);
 }
 
-export function getSomeButRestraint(some, but) {
+/**
+ * @param some {string}
+ * @param but {number}
+ * @return {function(string):boolean}
+ */
+function getSomeButRestraint(some, but) {
     return x => x.includes(some) && x[but] != some;
 }
 
-export function getNotRestraint(not) {
+/**
+ * @param not {string}
+ * @return {function(string):boolean}
+ */
+function getNotRestraint(not) {
     return (x) => !x.includes(not)
 }
 
-export function getAtRestraint(some, at) {
+/**
+ * @param some {string}
+ * @param at {number}
+ * @return {function(string):boolean}
+ */
+function getAtRestraint(some, at) {
     return x => x[at] == some;
 }
 
-export function getProposals(restraints = []) {
-    const words = filterWords(dictionary, ...restraints);
-    return getSorted(words, getDistribution(words));
+
+/**
+ * @param informations {Map<string,{here:number[],not_here_but:number[],not_here:number[]}>}
+ * @return {{function(string): boolean}[]}
+ */
+function getRestraints(informations) {
+    /**
+     * @type {{function(string):boolean}[]}
+     */
+    const restraint = [];
+    [...informations.entries()].forEach(([val, {here, not_here_but, not_here}]) => {
+        restraint.push(...here.map(i => getAtRestraint(val, i)));
+        restraint.push(...not_here_but.map(i => getSomeButRestraint(val, i)));
+        if (here.length == 0 && not_here.length > 0) {
+            restraint.push(getNotRestraint(val));
+        }
+        if (here.length > 0 && not_here.length > 0) {
+            restraint.push(...[0, 1, 2, 3, 4].filter(x => !here.includes(x)).map(i => getSomeButRestraint(val, i)));
+        }
+    })
+    return restraint;
 }
 
+/**
+ *
+ * @param informations {Map<string,{here:number[],not_here_but:number[],not_here:number[]}>}
+ * @return {string[]}
+ */
+export function getProposals(informations = []) {
+    const words = filterWords(dictionary, getRestraints(informations));
+    return getProposalsByLetterScore(words);
+}
 
+function getProposalsByPartition([...words]) {
+    const target = words.length / Math.pow(3, 5);
+    const getPartitionScore = (word) => {
+
+    }
+}
+
+function getProposalsByLetterScore([...words]) {
+    const distribution = getDistribution(words);
+    words.sort((a, b) => Math.sign(getDistributionScore(b, distribution) - getDistributionScore(a, distribution)));
+    return words;
+}
 
 
 

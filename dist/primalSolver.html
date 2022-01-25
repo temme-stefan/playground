@@ -9,7 +9,7 @@
         box-sizing: border-box;
     }
 
-    button,select {
+    button, select {
         border-radius: 0.25rem;
         height: 3.5rem;
         background: lightgray;
@@ -26,10 +26,10 @@
         padding-right: 1rem;
     }
 
-    select{
+    select {
         min-width: 150px;
-        padding-left:1rem;
-        padding-right:1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
     }
 
     #proposingList button {
@@ -249,17 +249,14 @@
 <script type="module">
     import {
         getAlphabet,
-        getAtRestraint,
-        getNotRestraint,
         getProposals,
-        getSomeButRestraint,
         setDictionary
     } from "./js/proposer.js";
 
     const available = new Map([
         ["primes", ["Primel", "https://converged.yt/primel/", "primes.json"]],
         ["wordle_de", ["Wordle (DE)", "https://wordle.uber.space/", "wordle-spielen.de.json"]],
-        ["wordle_en", ["Wordle (EN)" ,"https://www.powerlanguage.co.uk/wordle/","powerlanguage.co.uk_wordle.json"]]
+        ["wordle_en", ["Wordle (EN)", "https://www.powerlanguage.co.uk/wordle/", "powerlanguage.co.uk_wordle.json"]]
     ]);
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -375,7 +372,26 @@
             }
         }
 
-        function getRestraints() {
+        function updateProposal() {
+            const l = document.getElementById("proposingList");
+            while (l.firstChild && l.removeChild(l.firstChild)) ;
+            const infos=getInformationFromRows();
+            getProposals(infos).filter((x, i) => i < 10).forEach(x => {
+                const a = document.createElement("button");
+                a.innerText = x;
+                a.addEventListener("click", (ev) => {
+                    ev.preventDefault();
+                    fillRow(x);
+                });
+                l.append(a);
+
+            })
+        }
+
+        /**
+         * @return {Map<string,{here:number[],not_here_but:number[],not_here:number[]}>}
+         */
+        function getInformationFromRows() {
             const a = getAlphabet();
             const r = new Map(Array.from(a, l => {
                 return [l, {here: [], not_here_but: [], not_here: []}]
@@ -393,35 +409,9 @@
                     }
                 })
             });
-            const restraint = [];
-            [...r.entries()].forEach(([val, {here, not_here_but, not_here}]) => {
-                restraint.push(...here.map(i => getAtRestraint(val, i)));
-                restraint.push(...not_here_but.map(i => getSomeButRestraint(val, i)));
-                if (here.length == 0 && not_here.length > 0) {
-                    restraint.push(getNotRestraint(val));
-                }
-                if (here.length > 0 && not_here.length > 0) {
-                    restraint.push(...[0, 1, 2, 3, 4].filter(x => !here.includes(x)).map(i => getSomeButRestraint(val, i)));
-                }
-            })
-
-            return restraint;
+            return r;
         }
 
-        function updateProposal() {
-            const l = document.getElementById("proposingList");
-            while (l.firstChild && l.removeChild(l.firstChild)) ;
-            getProposals(getRestraints()).filter((x, i) => i < 10).forEach(x => {
-                const a = document.createElement("button");
-                a.innerText = x;
-                a.addEventListener("click", (ev) => {
-                    ev.preventDefault();
-                    fillRow(x);
-                });
-                l.append(a);
-
-            })
-        }
     })
 </script>
 </body>
