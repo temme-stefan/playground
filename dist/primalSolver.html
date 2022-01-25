@@ -1,6 +1,6 @@
 <html lang="en">
 <head>
-    <title>PrimalSolver</title>
+    <title>Solving Wordle</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
 </head>
@@ -28,8 +28,8 @@
 
     select {
         min-width: 150px;
+        width:100%;
         padding-left: 1rem;
-        padding-right: 1rem;
     }
 
     #proposingList button {
@@ -68,6 +68,7 @@
     form {
         grid-area: form;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
     }
@@ -127,6 +128,10 @@
 </header>
 <form>
     <select id="chooser"></select>
+    <select id="strategie">
+        <option selected="selected" value="propabilty">propability based</option>
+        <option value="minimum_result">reduce set !time!</option>
+    </select>
 </form>
 <main>
     <table>
@@ -276,6 +281,8 @@
             })
         );
 
+        document.getElementById("strategie").addEventListener("change", (ev)=>updateProposal());
+
 
         document.getElementById("delete").addEventListener("click", () => removeLast());
         document.getElementById("proposer").addEventListener("click", () => updateProposal());
@@ -375,17 +382,21 @@
         function updateProposal() {
             const l = document.getElementById("proposingList");
             while (l.firstChild && l.removeChild(l.firstChild)) ;
-            const infos=getInformationFromRows();
-            getProposals(infos).filter((x, i) => i < 10).forEach(x => {
-                const a = document.createElement("button");
-                a.innerText = x;
-                a.addEventListener("click", (ev) => {
-                    ev.preventDefault();
-                    fillRow(x);
+            l.innerText = "loading... This might take a while";
+            const infos = getInformationFromRows();
+            setTimeout(async () => {
+                const words = await getProposals(infos,document.getElementById("strategie").value);
+                l.innerText = "";
+                words.filter((x, i) => i < 10).forEach(x => {
+                    const a = document.createElement("button");
+                    a.innerText = x;
+                    a.addEventListener("click", (ev) => {
+                        ev.preventDefault();
+                        fillRow(x);
+                    });
+                    l.append(a);
                 });
-                l.append(a);
-
-            })
+            }, 20);
         }
 
         /**

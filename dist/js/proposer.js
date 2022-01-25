@@ -104,11 +104,64 @@ function getRestraints(informations) {
 /**
  *
  * @param informations {Map<string,{here:number[],not_here_but:number[],not_here:number[]}>}
+ * @param strategie {string}
+ * @return {Promise<string[]>}
+ */
+function getProposals(informations, strategie = "propabilty") {
+    const words = filterWords(dictionary, getRestraints(informations));
+    return new Promise(async (resolve, reject) => {
+        switch (strategie) {
+            case "propabilty":
+                resolve(getProposalsByLetterScore(words));
+                break;
+            case "minimum_result":
+                const props = getProposalsByPartition(words, informations);
+                resolve(props);
+                break;
+            default:
+                reject(new Error("unknown strategie: " + strategie));
+                break;
+        }
+    });
+}
+
+/**
+ * @param words {string[]}
+ * @param information {Map<string,{here:number[],not_here_but:number[],not_here:number[]}>}
  * @return {string[]}
  */
-function getProposals(informations = []) {
-    const words = filterWords(dictionary, getRestraints(informations));
-    return getProposalsByLetterScore(words);
+function getProposalsByPartition([...words], information) {
+    if (words.length == 0) return words;
+    console.log("start", words.length);
+    const getPartitionScore = (word, print = false) => {
+        const notFixed = word.split("").map((c, i) => [c, i]).filter(([c, i]) => !information.get(c).here.includes(i));
+        const partitions = notFixed.reduce((partition, [c, i]) =>
+                partition.map((wordlist) => {
+                    const here = wordlist.filter(getAtRestraint(c, i));
+                    const not_here_but = wordlist.filter(getSomeButRestraint(c, i));
+                    let not_here = wordlist;
+                    if (information.get(c).here.length == 0) {
+                        not_here = not_here.filter(getNotRestraint(c));
+                    } else {
+                        [0, 1, 2, 3, 4].filter(l => !information.get(c).here.includes(l)).forEach(l => {
+                            not_here = not_here.filter(getSomeButRestraint(c, l));
+                        });
+                    }
+                    return [here, not_here_but, not_here].filter(({length}) => length > 0);
+                }).flat()
+            , [words]);
+        const avaragesize = words.length / partitions.length;
+        const score = partitions.reduce((a, {length}) => a + Math.pow(Math.abs(avaragesize - length), 2), 0);
+        if (print) {
+            console.log(partitions);
+        }
+        return score;
+    };
+    const lookUp = new Map(words.map(w => [w, getPartitionScore(w)]));
+    words.sort((a, b) => Math.sign(lookUp.get(a) - lookUp.get(b)));
+    getPartitionScore(words[0], true);
+    return words;
+
 }
 
 function getProposalsByLetterScore([...words]) {
