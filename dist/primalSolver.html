@@ -28,7 +28,7 @@
 
     select {
         min-width: 150px;
-        width:100%;
+        width: 100%;
         padding-left: 1rem;
     }
 
@@ -261,7 +261,8 @@
     const available = new Map([
         ["primes", ["Primel", "https://converged.yt/primel/", "primes.json"]],
         ["wordle_de", ["Wordle (DE)", "https://wordle.uber.space/", "wordle-spielen.de.json"]],
-        ["wordle_en", ["Wordle (EN)", "https://www.powerlanguage.co.uk/wordle/", "powerlanguage.co.uk_wordle.json"]]
+        ["wordle_en", ["Wordle (EN)", "https://www.powerlanguage.co.uk/wordle/", "powerlanguage.co.uk_wordle.json"]],
+        ["wordle_at", ["Wordle (DE-AT)", "https://wordle.at/", "wordle.at.json"]]
     ]);
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -281,7 +282,7 @@
             })
         );
 
-        document.getElementById("strategie").addEventListener("change", (ev)=>updateProposal());
+        document.getElementById("strategie").addEventListener("change", (ev) => updateProposal());
 
 
         document.getElementById("delete").addEventListener("click", () => removeLast());
@@ -385,7 +386,7 @@
             l.innerText = "loading... This might take a while";
             const infos = getInformationFromRows();
             setTimeout(async () => {
-                const words = await getProposals(infos,document.getElementById("strategie").value);
+                const words = await getProposals(infos, document.getElementById("strategie").value);
                 l.innerText = "";
                 words.filter((x, i) => i < 10).forEach(x => {
                     const a = document.createElement("button");
