@@ -5,11 +5,24 @@ const alphabet = [];
  * @param dict {string[]}
  */
 export function setDictionary(dict) {
-    dictionary.splice(0, dictionary.length, ...dict);
+
+    dictionary.splice(0, dictionary.length, ...sanitizeDict(dict));
     const alpha = new Set();
     dictionary.forEach(s => s.split("").forEach(c => alpha.add(c)));
     alphabet.splice(0, alphabet.length, ...alpha);
     alphabet.sort();
+}
+
+/**
+ * @param dict {string[]}
+ * @return {string[]}
+ */
+function sanitizeDict(dict) {
+    const sanitized = [...new Set(dict.map(s => s.toUpperCase()))];
+    if (sanitized.length < dict.length) {
+        console.log("Removes Duplicates", dict.length - sanitized.length);
+    }
+    return sanitized;
 }
 
 /**

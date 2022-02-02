@@ -5,11 +5,24 @@ const alphabet = [];
  * @param dict {string[]}
  */
 function setDictionary(dict) {
-    dictionary.splice(0, dictionary.length, ...dict);
+
+    dictionary.splice(0, dictionary.length, ...sanitizeDict(dict));
     const alpha = new Set();
     dictionary.forEach(s => s.split("").forEach(c => alpha.add(c)));
     alphabet.splice(0, alphabet.length, ...alpha);
     alphabet.sort();
+}
+
+/**
+ * @param dict {string[]}
+ * @return {string[]}
+ */
+function sanitizeDict(dict) {
+    const sanitized = [...new Set(dict.map(s => s.toUpperCase()))];
+    if (sanitized.length < dict.length) {
+        console.log("Removes Duplicates", dict.length - sanitized.length);
+    }
+    return sanitized;
 }
 
 /**
@@ -37,7 +50,7 @@ function getDistribution(words) {
 }
 
 function getDistributionScore(word, distribution) {
-    return word.split("").map(s => parseInt(s)).reduce((a, v, i) => a + distribution[i][v], 0);
+    return word.split("").map(s => alphabet.indexOf(s)).reduce((a, v, i) => a + distribution[i][v], 0);
 }
 
 
@@ -50,6 +63,17 @@ function getDistributionScore(word, distribution) {
 function filterWords(words, restraints) {
     const restraint = restraints.reduce((a, f) => (x) => a(x) && f(x), (x) => true);
     return words.filter(restraint);
+}
+
+/**
+ *
+ * @param words {string[]}
+ * @param restraints {{function(string):boolean}[]}
+ * @return {number}
+ */
+function countWords(words, restraints) {
+    const restraint = restraints.reduce((a, f) => (x) => a(x) && f(x), (x) => true);
+    return words.filter(restraint).length;
 }
 
 /**
@@ -93,7 +117,41 @@ function getSomeAtRestraint(some, at) {
 }
 
 /**
- * @param informations {Map<string,{here:number[],not_here_but:number[],not_here:number[]}>}
+ * @param row {{pos: number, state: 'here' | 'somewhere' | 'no', value: string}[]}
+ * @return {{function(string): boolean}[]}
+ */
+function getRowRestraints(row) {
+    const m = new Map();
+    const rowRestraints = [];
+    const add = ({value, state, pos}) => {
+        const k = m.get(value) ?? {here: [], somewhere: [], no: []};
+        k[state].push(pos);
+        m.set(value, k);
+    }
+    row.forEach(c => add(c));
+    [...m.entries()].forEach(([val, {here, somewhere, no}]) => {
+        const p = {
+            minCount: 0,
+            maxCount: 5
+        };
+        p.minCount = here.length + somewhere.length;
+        if (no.length > 0) {
+            p.maxCount = p.minCount;
+        }
+        rowRestraints.push(w => {
+            const count = w.split("").filter(c => c == val).length;
+            return count >= p.minCount && count <= p.maxCount;
+        });
+        rowRestraints.push(...here.map((i) => w => w[i] == val));
+        rowRestraints.push(...somewhere.map((i) => w => w[i] != val));
+
+
+    });
+    return rowRestraints;
+}
+
+/**
+ * @param informations {{pos: number, state: 'here' | 'somewhere' | 'no', value: string}[][]}
  * @return {{function(string): boolean}[]}
  */
 function getRestraints(informations) {
@@ -101,27 +159,15 @@ function getRestraints(informations) {
      * @type {{function(string):boolean}[]}
      */
     const restraint = [];
-    [...informations.entries()].forEach(([val, {here, not_here_but, not_here}]) => {
-        restraint.push(...here.map(i => getAtRestraint(val, i)));
-        if (here.length == 0 && not_here_but.length > 0) {
-            restraint.push(...not_here_but.map(i => getSomeButRestraint(val, i)));
-        }
-        if (here.length > 0 && not_here_but.length > 0) {
-            restraint.push(getSomeAtRestraint(val, [0, 1, 2, 3, 4].filter(x => !here.includes(x) && !not_here_but.includes(x))));
-        }
-        if (here.length == 0 && not_here.length > 0) {
-            restraint.push(getNotRestraint(val));
-        }
-        if (here.length > 0 && not_here.length > 0) {
-            restraint.push(...[0, 1, 2, 3, 4].filter(x => !here.includes(x)).map(i => getSomeButRestraint(val, i)));
-        }
+    informations.forEach(row => {
+        restraint.push(...getRowRestraints(row));
     });
     return restraint;
 }
 
 /**
  *
- * @param informations {Map<string,{here:number[],not_here_but:number[],not_here:number[]}>}
+ * @param informations {{pos: number, state: 'here' | 'somewhere' | 'no', value: string}[][]}
  * @param strategie {string}
  * @return {Promise<string[]>}
  */
@@ -145,31 +191,33 @@ function getProposals(informations, strategie = "propabilty") {
 
 /**
  * @param words {string[]}
- * @param information {Map<string,{here:number[],not_here_but:number[],not_here:number[]}>}
+ * @param information {{pos: number, state: 'here' | 'somewhere' | 'no', value: string}[][]}
  * @return {string[]}
  */
 function getProposalsByPartition([...words], information) {
-    if (words.length == 0) return words;
+    if (words.length == 0 || information.length==0) return words;
     console.log("start", words.length);
+
+    const fixed =new Set( information.flat().filter(({state})=>state=="here").map(({pos})=>pos));
+    const rowInformation = Array.from({length: 5},(_,pos)=>{
+        return {pos,state:fixed.has(pos)?'here':null};
+    });
+    let allPoss=[rowInformation]
+    for (let i =0 ; i<rowInformation.length;i++){
+        if (rowInformation[i].state==null){
+            allPoss = ["here","somewhere","no"].map(s=>allPoss.map(([...p])=>{
+                p[i]={...p[i],state: s};
+                return p;
+            })).flat();
+        }
+    }
     const getPartitionScore = (word, print = false) => {
-        const notFixed = word.split("").map((c, i) => [c, i]).filter(([c, i]) => !information.get(c).here.includes(i));
-        const partitions = notFixed.reduce((partition, [c, i]) =>
-                partition.map((wordlist) => {
-                    const here = wordlist.filter(getAtRestraint(c, i));
-                    const not_here_but = wordlist.filter(getSomeButRestraint(c, i));
-                    let not_here = wordlist;
-                    if (information.get(c).here.length == 0) {
-                        not_here = not_here.filter(getNotRestraint(c));
-                    } else {
-                        [0, 1, 2, 3, 4].filter(l => !information.get(c).here.includes(l)).forEach(l => {
-                            not_here = not_here.filter(getSomeButRestraint(c, l));
-                        });
-                    }
-                    return [here, not_here_but, not_here].filter(({length}) => length > 0);
-                }).flat()
-            , [words]);
+        allPoss.forEach(p=>p.forEach((c,i)=>c.value=word[i]));
+
+        const partitions = allPoss.map(rowInformation=> countWords(words, getRowRestraints(rowInformation) ))
+            .filter(x=>x>0);
         const avaragesize = words.length / partitions.length;
-        const score = partitions.reduce((a, {length}) => a + Math.pow(Math.abs(avaragesize - length), 2), 0);
+        const score = partitions.reduce((a, b) => a + Math.pow(Math.abs(avaragesize - b), 2), 0);
         if (print) {
             console.log(partitions);
         }
@@ -177,7 +225,11 @@ function getProposalsByPartition([...words], information) {
     };
     const lookUp = new Map(words.map(w => [w, getPartitionScore(w)]));
     words.sort((a, b) => Math.sign(lookUp.get(a) - lookUp.get(b)));
-    getPartitionScore(words[0], true);
+    if (information.length==0){
+        console.log(JSON.stringify(words));
+    }
+    getPartitionScore(words[0],true);
+
     return words;
 
 }
@@ -188,4 +240,4 @@ function getProposalsByLetterScore([...words]) {
     return words;
 }
 
-export { getAlphabet, getProposals, setDictionary };
+export {getAlphabet, getProposals, setDictionary};

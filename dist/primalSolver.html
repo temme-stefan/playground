@@ -294,8 +294,8 @@
         });
 
         document.addEventListener("keyup", ev => {
-            if (getAlphabet().includes(ev.key)) {
-                setContent(ev.key);
+            if (getAlphabet().includes(ev.key.toUpperCase())) {
+                setContent(ev.key.toUpperCase());
             }
             if (ev.key == "Backspace") {
                 removeLast()
@@ -422,27 +422,18 @@
         }
 
         /**
-         * @return {Map<string,{here:number[],not_here_but:number[],not_here:number[]}>}
+         * @return {{pos: number, state: 'here' | 'somewhere' | 'no', value: string}[][]}
          */
         function getInformationFromRows() {
-            const a = getAlphabet();
-            const r = new Map(Array.from(a, l => {
-                return [l, {here: [], not_here_but: [], not_here: []}]
-            }));
-            [...document.getElementsByClassName("rowComplete")].forEach(row => {
-                [...row.getElementsByTagName("button")].forEach((button, i) => {
-                    const classes = [...button.classList];
-                    const t = r.get(button.innerText);
-                    if (classes.includes("here")) {
-                        t.here.push(i);
-                    } else if (classes.includes("somewhere")) {
-                        t.not_here_but.push(i);
-                    } else {
-                        t.not_here.push(i);
+            return [...document.getElementsByClassName("rowComplete")].map(row =>
+                [...row.getElementsByTagName("button")].map((b,i) => {
+                    return {
+                        value: b.innerText,
+                        state: b.classList.contains('here') ? 'here' : (b.classList.contains('somewhere') ? 'somewhere' : 'no'),
+                        pos:i
                     }
                 })
-            });
-            return r;
+            );
         }
 
     })
