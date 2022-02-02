@@ -346,7 +346,28 @@
             if (td) {
                 td.textContent = s;
                 if (td.parentElement == td.parentElement.parentElement.lastElementChild) {
-                    td.parentElement.parentElement.classList.toggle("rowComplete");
+                    setComplete(td.parentElement.parentElement);
+                }
+            }
+        }
+
+        function setComplete(tr) {
+            let lastRow = null;
+            for (let sibling of tr.parentElement.children) {
+                if (sibling != tr) {
+                    lastRow = sibling;
+                } else {
+                    break;
+                }
+            }
+            tr.classList.toggle("rowComplete");
+            if (lastRow != null) {
+                const lastButtons = [...lastRow.querySelectorAll("button")];
+                const curButtons = [...tr.querySelectorAll("button")];
+                for (let i = 0; i < lastButtons.length; i++) {
+                    if (lastButtons[i].classList.contains('here') && lastButtons[i].innerText == curButtons[i].innerText) {
+                        curButtons[i].classList.add('here');
+                    }
                 }
             }
         }
@@ -376,7 +397,7 @@
                 [...td.parentElement.parentElement.getElementsByTagName("button")].forEach((td, i) => {
                     td.textContent = s[i];
                 })
-                td.parentElement.parentElement.classList.toggle("rowComplete");
+                setComplete(td.parentElement.parentElement);
             }
         }
 
