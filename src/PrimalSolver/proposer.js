@@ -78,6 +78,19 @@ function getAtRestraint(some, at) {
     return x => x[at] == some;
 }
 
+/**
+ * @param some {string}
+ * @param at {number[]}
+ * @return {function(string):boolean}
+ */
+function getSomeAtRestraint(some, at) {
+    /**
+     * @param w {string}
+     * @return {boolean}
+     */
+    const def = w => false;
+    return at.reduce((a, i) => w => w[i] == some || a(w), def);
+}
 
 /**
  * @param informations {Map<string,{here:number[],not_here_but:number[],not_here:number[]}>}
@@ -90,7 +103,12 @@ function getRestraints(informations) {
     const restraint = [];
     [...informations.entries()].forEach(([val, {here, not_here_but, not_here}]) => {
         restraint.push(...here.map(i => getAtRestraint(val, i)));
-        restraint.push(...not_here_but.map(i => getSomeButRestraint(val, i)));
+        if (here.length == 0 && not_here_but.length > 0) {
+            restraint.push(...not_here_but.map(i => getSomeButRestraint(val, i)));
+        }
+        if (here.length > 0 && not_here_but.length > 0) {
+            restraint.push(getSomeAtRestraint(val, [0, 1, 2, 3, 4].filter(x => !here.includes(x) && !not_here_but.includes(x))));
+        }
         if (here.length == 0 && not_here.length > 0) {
             restraint.push(getNotRestraint(val));
         }
