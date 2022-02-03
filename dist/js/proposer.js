@@ -77,46 +77,6 @@ function countWords(words, restraints) {
 }
 
 /**
- * @param some {string}
- * @param but {number}
- * @return {function(string):boolean}
- */
-function getSomeButRestraint(some, but) {
-    return x => x.includes(some) && x[but] != some;
-}
-
-/**
- * @param not {string}
- * @return {function(string):boolean}
- */
-function getNotRestraint(not) {
-    return (x) => !x.includes(not)
-}
-
-/**
- * @param some {string}
- * @param at {number}
- * @return {function(string):boolean}
- */
-function getAtRestraint(some, at) {
-    return x => x[at] == some;
-}
-
-/**
- * @param some {string}
- * @param at {number[]}
- * @return {function(string):boolean}
- */
-function getSomeAtRestraint(some, at) {
-    /**
-     * @param w {string}
-     * @return {boolean}
-     */
-    const def = w => false;
-    return at.reduce((a, i) => w => w[i] == some || a(w), def);
-}
-
-/**
  * @param row {{pos: number, state: 'here' | 'somewhere' | 'no', value: string}[]}
  * @return {{function(string): boolean}[]}
  */
@@ -127,7 +87,7 @@ function getRowRestraints(row) {
         const k = m.get(value) ?? {here: [], somewhere: [], no: []};
         k[state].push(pos);
         m.set(value, k);
-    }
+    };
     row.forEach(c => add(c));
     [...m.entries()].forEach(([val, {here, somewhere, no}]) => {
         const p = {
@@ -202,7 +162,7 @@ function getProposalsByPartition([...words], information) {
     const rowInformation = Array.from({length: 5},(_,pos)=>{
         return {pos,state:fixed.has(pos)?'here':null};
     });
-    let allPoss=[rowInformation]
+    let allPoss=[rowInformation];
     for (let i =0 ; i<rowInformation.length;i++){
         if (rowInformation[i].state==null){
             allPoss = ["here","somewhere","no"].map(s=>allPoss.map(([...p])=>{
@@ -228,8 +188,7 @@ function getProposalsByPartition([...words], information) {
     if (information.length==0){
         console.log(JSON.stringify(words));
     }
-    getPartitionScore(words[0],true);
-
+    getPartitionScore(words[0], true);
     return words;
 
 }
@@ -240,4 +199,4 @@ function getProposalsByLetterScore([...words]) {
     return words;
 }
 
-export {getAlphabet, getProposals, setDictionary};
+export { getAlphabet, getProposals, setDictionary };
